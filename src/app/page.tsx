@@ -1,65 +1,122 @@
-import Image from "next/image";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { DashboardClient } from "@/components/dashboard-client";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 
-export default function Home() {
+export default async function DashboardPage() {
+  const supabase = await createServerSupabaseClient();
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Check if user has profile (invited users only)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!profile) {
+    redirect("/not-invited");
+  }
+
+  // Fetch all friends' profiles
+  const { data: allProfiles } = await supabase
+    .from("profiles")
+    .select("*");
+
+  // Fetch current user's latest weight
+  const { data: latestWeight } = await supabase
+    .from("body_weight_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  // Fetch attendance for streak calculation
+  const { data: attendance } = await supabase
+    .from("attendance_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "present")
+    .order("date", { ascending: false });
+
+  // Fetch this week's attendance
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const { data: weekAttendance } = await supabase
+    .from("attendance_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("date", weekStart.toISOString().split("T")[0])
+    .lte("date", weekEnd.toISOString().split("T")[0]);
+
+  // Fetch latest workout
+  const { data: latestWorkout } = await supabase
+    .from("workouts")
+    .select("*, workout_sets(*)")
+    .eq("user_id", user.id)
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  // Fetch PRs
+  const { data: prs } = await supabase
+    .from("workouts")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("is_pr", true)
+    .order("date", { ascending: false })
+    .limit(5);
+
+  // Calculate streak
+  const presentDates = (attendance || []).map((a) => new Date(a.date));
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  for (let i = 0; i < presentDates.length; i++) {
+    const d = new Date(presentDates[i]);
+    d.setHours(0, 0, 0, 0);
+    const expected = new Date(today);
+    expected.setDate(expected.getDate() - i);
+    
+    if (d.getTime() === expected.getTime()) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  const weekProgress = weekDays.map((day) => {
+    const log = weekAttendance?.find((a) => 
+      isSameDay(new Date(a.date), day)
+    );
+    return {
+      day: format(day, "EEE"),
+      status: log?.status || null,
+      date: day,
+    };
+  });
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <DashboardClient
+      profile={profile}
+      allProfiles={allProfiles || []}
+      latestWeight={latestWeight}
+      streak={streak}
+      weekProgress={weekProgress}
+      latestWorkout={latestWorkout}
+      prs={prs || []}
+      currentUserId={user.id}
+    />
   );
 }
