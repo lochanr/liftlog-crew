@@ -25,7 +25,7 @@ const FIELDS = [
 export function MeasurementTracker({ logs, userId }: { logs: BodyMeasurementLog[]; userId: string }) {
   const [measurements, setMeasurements] = useState(logs);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [form, setForm] = useState<Record<string, string>({});
+  const [form, setForm] = useState<<Record<string, string>>({});
   const supabase = createClient();
 
   const latest = measurements[measurements.length - 1];
