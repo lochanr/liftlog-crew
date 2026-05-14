@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import type { BodyMeasurementLog } from "@/types/database";
+import { Badge } from "@/components/ui/badge";
 
 const FIELDS = [
   { key: "biceps", label: "Biceps" },
