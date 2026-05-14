@@ -20,18 +20,26 @@ export function ProfileForm({ profile, userId }: { profile: Profile | null; user
   const supabase = createClient();
 
   const handleSave = async () => {
+    const payload: any = {
+      user_id: userId,
+      name,
+      fitness_goal: goal || null,
+      starting_weight: startingWeight ? parseFloat(startingWeight) : null,
+      target_weight: targetWeight ? parseFloat(targetWeight) : null,
+      height: height ? parseFloat(height) : null,
+    };
+
+    // If we already have a profile row, include its id so upsert targets the right row
+    if (profile?.id) {
+      payload.id = profile.id;
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .upsert({
-        user_id: userId,
-        name,
-        fitness_goal: goal,
-        starting_weight: startingWeight ? parseFloat(startingWeight) : null,
-        target_weight: targetWeight ? parseFloat(targetWeight) : null,
-        height: height ? parseFloat(height) : null,
-      });
+      .upsert(payload, { onConflict: "user_id" });
 
     if (error) {
+      console.error(error);
       toast.error("Failed to save profile");
       return;
     }
