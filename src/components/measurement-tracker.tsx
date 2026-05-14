@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import { Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import type { BodyMeasurementLog } from "@/types/database";
-import { Badge } from "@/components/ui/badge";
 
 const FIELDS = [
   { key: "biceps", label: "Biceps" },
@@ -88,7 +88,6 @@ export function MeasurementTracker({ logs, userId }: { logs: BodyMeasurementLog[
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Body Measurements</h2>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         {FIELDS.map((f) => {
           const change = getChange(f.key as keyof BodyMeasurementLog);
@@ -118,7 +117,6 @@ export function MeasurementTracker({ logs, userId }: { logs: BodyMeasurementLog[
         })}
       </div>
 
-      {/* Chart */}
       {measurements.length > 1 && (
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardHeader>
@@ -151,7 +149,6 @@ export function MeasurementTracker({ logs, userId }: { logs: BodyMeasurementLog[
         </Card>
       )}
 
-      {/* Log Form */}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
           <CardTitle className="text-sm">Log Measurements</CardTitle>
@@ -182,7 +179,6 @@ export function MeasurementTracker({ logs, userId }: { logs: BodyMeasurementLog[
         </CardContent>
       </Card>
 
-      {/* History */}
       <div className="space-y-2">
         <h3 className="font-semibold text-sm text-zinc-400">History</h3>
         {[...measurements].reverse().map((m) => (

@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Flame, Dumbbell, TrendingUp, Weight, Calendar } from "lucide-react";
+import { Trophy, Flame, Dumbbell, Weight } from "lucide-react";
 
 export default async function FriendPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,7 +12,6 @@ export default async function FriendPage({ params }: { params: Promise<{ id: str
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Fetch friend's profile
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
@@ -21,7 +20,6 @@ export default async function FriendPage({ params }: { params: Promise<{ id: str
 
   if (!profile) notFound();
 
-  // Fetch stats
   const { data: latestWeight } = await supabase
     .from("body_weight_logs")
     .select("*")

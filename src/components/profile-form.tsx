@@ -29,7 +29,6 @@ export function ProfileForm({ profile, userId }: { profile: Profile | null; user
       height: height ? parseFloat(height) : null,
     };
 
-    // If we already have a profile row, include its id so upsert targets the right row
     if (profile?.id) {
       payload.id = profile.id;
     }
@@ -39,8 +38,8 @@ export function ProfileForm({ profile, userId }: { profile: Profile | null; user
       .upsert(payload, { onConflict: "user_id" });
 
     if (error) {
-      console.error(error);
-      toast.error("Failed to save profile");
+      console.error("Profile save error:", error);
+      toast.error("Failed to save profile: " + error.message);
       return;
     }
 
